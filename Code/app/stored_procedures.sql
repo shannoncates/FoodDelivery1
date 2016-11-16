@@ -33,6 +33,7 @@ create table "Catering"
 create table "Restaurant"
 {
 	restaurant_id int primary key,
+	location_id int references "Location",
 	restaurant_name text,
 	restaurant_info text,
 	is_active boolean default True
@@ -44,8 +45,6 @@ create table "Restaurant"
 create table "Location"
 {
 	location_id int primary key,
-	restaurant_id int references "Restaurant",
-	catering_id int references "Catering",
 	location_name text,
 	is_active boolean default True
 };
@@ -56,7 +55,6 @@ create table "Location"
 create table "Food"
 {
 	food_id int primary key,
-	user_id text references "User",
 	restaurant_id int references "Restaurant",
 	food_name text,
 	food_info text,
@@ -129,9 +127,9 @@ $$
 -- ##### RESTAURANT STORED PROCEDURES START HERE ##### --
 
 -- (1) Retrieve all restaurants in the database (GET)
-create function list_restaurants(out int, out text, out text) returns setof record as
+create function list_restaurants(out int, out int, out text, out text) returns setof record as
 $$
-	select restaurant_id, restaurant_name, restaurant_info
+	select restaurant_id, location_id, restaurant_name, restaurant_info
 	from "Restaurant"
 	where is_active = True;
 $$
@@ -139,9 +137,9 @@ $$
 
 
 -- (2) Retrieve certain restaurant (GET)
-create function get_restaurant(in par_restaurant_id int, out int, out text, out text) returns setof record as
+create function get_restaurant(in par_restaurant_id int, out int, out int, out text, out text) returns setof record as
 $$
-	select restaurant_id, restaurant_name, restaurant_info
+	select restaurant_id, location_id, restaurant_name, restaurant_info
 	from "Restaurant"
 	where is_active = True and restaurant_id = par_restaurant_id;
 $$
@@ -153,9 +151,9 @@ $$
 -- ##### LOCATION STORED PROCEDURES START HERE ##### --
 
 -- (1) Retrieve all locations in the database (GET)
-create function list_locations(out int, out int, out int, out text, out boolean) returns setof record as
+create function list_locations(out int, out text, out boolean) returns setof record as
 $$
-	select location_id, restaurant_id, catering_id, location_name, is_active
+	select location_id, location_name, is_active
 	from "Location"
 	where is_active = True;
 $$
@@ -167,9 +165,9 @@ $$
 -- ##### FOOD STORED PROCEDURES START HERE ##### --
 
 -- (1) Retrieve all foods from the restaurant who matches the restaurant id parameter (GET)
-create function get_food_by_restaurant(in par_restaurant_id int, out int, out text, out int, out text, out text, out text) returns setof record as
+create function get_food_by_restaurant(in par_restaurant_id int, out int, out int, out text, out text, out text) returns setof record as
 $$
-	select food_id, user_id, restaurant_id, food_name, food_info, food_price
+	select food_id, restaurant_id, food_name, food_info, food_price
 	from "Food" 
 	where is_active = True and restaurant_id = par_restaurant_id;
 $$
@@ -177,10 +175,10 @@ $$
 
 
 -- (2) Add food to tray (POST)
-create function add_food(par_food_id int, par_user_id text, par_restaurant_id int, par_food_name text, par_food_info text, par_food_price text) returns void as
+create function add_food(par_food_id int, par_restaurant_id int, par_food_name text, par_food_info text, par_food_price text) returns void as
 $body$
 	begin
-		insert into "Food" values (par_food_id, par_user_id, par_restaurant_id, par_food_name, par_food_info, par_food_price, True);
+		insert into "Food" values (par_food_id, par_restaurant_id, par_food_name, par_food_info, par_food_price, True);
 	end
 $body$
 	language 'plpgsql';
